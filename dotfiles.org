@@ -1,0 +1,555 @@
+#+TITLE: Emacs Configuration file
+#+AUTHOR: Marvin Liu
+#+EMAIL: psychicalcoder@gmail.com
+#+BABEL: :cache yes
+#+PROPERTY: header-args :tangle yes
+
+* About
+
+  This is my Emacs configuration file written in Org-mode. Org-babel provide a
+  good semi-literate programming environment. Insert 
+  #+BEGIN_SRC org :tangle no
+    ,#+BEGIN_SRC emacs-lisp
+    (your-emacs-lisp-code-here) 
+    ,#+END_SRC
+  #+END_SRC
+  in this file. Then the source block will be tangle automatically and be eval
+  by Emacs.
+
+* Packages
+   
+  Managing extensions for Emacs with built-in package manager =package=.
+
+#+begin_src emacs-lisp
+  (require 'package)
+  (require 'cl)
+#+end_src
+
+  Package can be fetched from different mirrors, melpa is the largest archive and is well maintained.
+  Org is an offical mirror of org-mode.
+   
+#+begin_src emacs-lisp
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+  (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+  (package-initialize)
+
+  (unless package-archive-contents
+    (package-refresh-contents))
+#+end_src
+
+  The following configuration assumes that the packages listed below are installed.
+  If we would like to add some extensions, put the names in =marvin/package-list=.
+
+#+begin_src emacs-lisp
+  (defvar marvin/package-list '(rainbow-delimiters
+				doom-themes
+				google-translate
+				company
+				yasnippet
+				yasnippet-snippets
+				helm
+				ox-reveal
+				htmlize
+				company-c-headers
+				nyan-mode
+				rtags
+				company-rtags
+				irony
+				company-irony
+				company-irony-c-headers
+				irony-eldoc
+				flycheck
+				flycheck-irony
+				helm-rtags
+				magit
+				))
+  (dolist (package marvin/package-list)
+    (unless (package-installed-p package)
+      (package-install package)))
+#+end_src
+
+* General defaults
+
+  We can set variables to whatever vale we'd like using =setq-default=.
+
+#+begin_src emacs-lisp
+  (setq-default inhibit-startup-message t)
+#+end_src
+
+  Some variable are buffer-local, so changing them sing =setq= will only change them in a single buffer.
+  Using =setq-default= we change the buffer-local variable's default value.
+
+#+begin_src emacs-lisp
+  (setq-default fill-column 79                    ; Maximum line width
+                truncate-lines t                  ; Don't fold lines
+                indent-tabs-mode nil              ; Use spaces instead of tabs
+                split-width-threshold 160         ; Split verticly be default
+                split-height-threshold nil        ; Split verticly by default
+                auto-fill-function 'do-auto-fill) ; Auto-fill-mode everywhere
+#+end_src
+
+  Answering /yes/ and /no/ to each question from Emacs can be tedious, a
+  single /y/ or /n/ will suffice.
+   
+#+begin_src emacs-lisp
+  (fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+  To avoid file system clutter we put all auto saved files in a single
+  directory.
+   
+#+BEGIN_SRC emacs-lisp
+  (defvar emacs-autosave-directory
+    (concat user-emacs-directory "autosaves/")
+    "This variable dictates where to put auto saves. It is set to a
+    directory called autosaves located wherever your .emacs.d/ is
+    located.")
+
+  ;; Sets all files to be backed up and auto saved in a single directory.
+  (setq backup-directory-alist
+        `((".*" . ,emacs-autosave-directory))
+        auto-save-file-name-transforms
+        `((".*" ,emacs-autosave-directory t)))
+#+END_SRC
+
+  Set =utf-8= as preferred coding system.
+
+#+BEGIN_SRC emacs-lisp
+  (set-language-environment "UTF-8")
+#+END_SRC
+
+* Modes 
+  There are some modes that are enabled by default that I don't find
+  particularly useful.We create a list of these modes, and disable all of
+  these.
+
+  #+begin_src emacs-lisp
+  (dolist (mode '(tool-bar-mode
+                  scroll-bar-mode
+                  menu-bar-mode
+                  blink-cursor-mode))
+    (funcall mode 0))
+  #+end_src
+
+  Let's apply the same techniqe for enabling modes that are disabled by
+  default.
+   
+  #+begin_src emacs-lisp
+  (dolist (mode
+           '(abbrev-mode
+             column-number-mode
+             delete-selection-mode
+             dirtrack-mode
+             show-paren-mode
+             electric-pair-mode))
+    (funcall mode 1))
+  #+end_src
+
+  Enable some modes for specific major modes.
+
+  #+begin_src emacs-lisp
+  (require 'rainbow-delimiters)
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+  (add-hook 'prog-mode-hook 'linum-mode)
+  #+end_src
+
+* Key bindings
+  
+#+BEGIN_SRC emacs-lisp
+  (defvar marvin-bindings-map (make-keymap)
+    "A keymap for custom bindings.")
+#+END_SRC
+
+  Lastly we need to activate the map by creating and activating the
+  =minor-mode=.
+
+#+begin_src emacs-lisp
+  (define-minor-mode marvin-bindings-mode
+    "A mode that activates custom-bindings."
+    t nil marvin-bindings-map)
+#+end_src
+
+** Bindings for built-ins
+
+  #+begin_src emacs-lisp
+  (define-key marvin-bindings-map (kbd "C-x ,") 'previous-buffer)
+  (define-key marvin-bindings-map (kbd "C-x .") 'next-buffer)
+  (define-key marvin-bindings-map (kbd "C-x /") '(lambda () 
+                                                   (interactive)
+                                                   (kill-buffer)))
+  #+end_src
+
+* Visual
+   
+  Change the color-theme to =doom-molokai=
+
+  #+begin_src emacs-lisp
+  (require 'doom-themes)
+  (setq doom-themes-enable-bold t
+        doom-themes-enable-italic t)
+  (load-theme 'doom-molokai t)
+  #+end_src
+
+  Use /Menlo/ and /Source Han Sans/ as default and Chinese font.
+
+  #+begin_src emacs-lisp
+  (set-face-attribute 'default nil :font "Menlo 10")
+  (set-fontset-font t 'han (font-spec :family "Source Han Sans"))
+  #+end_src
+
+  Set *All Hail Emacs* as the windows title.
+   
+  #+begin_src emacs-lisp
+  (setq-default frame-title-format (list "All Hail Emacs!"))
+  #+end_src
+
+  I copied this [[http://emacs-fu.blogspot.com/2011/08/customizing-mode-line.html][post]] and added =nyan-mode= to my mode line.
+   
+
+  #+BEGIN_SRC emacs-lisp
+    (require 'nyan-mode)
+
+    (defvar minor-mode-show nil)
+
+    (defface mode-line-buffer-name
+      '((t :background "dark green" :foreground "light green"))
+      "Face used for buffer name part of the mode line."
+      :group 'mode-line-faces
+      :group 'basic-faces)
+
+    (setq-default mode-line-format 
+      (list '(:eval (propertize "%b" 'face 'mode-line-buffer-name
+                                'help-echo (buffer-file-name)))
+
+      " ("
+        (propertize "%l" 'face 'font-lock-type-face) ","
+        (propertize "%c" 'face 'font-lock-type-face)
+      ") "
+
+      "["
+      (propertize "%p" 'face 'font-lock-constant-face)
+      "/"
+      (propertize "%I" 'face 'font-lock-constant-face)
+      "] "
+
+      "["
+      '(:eval (propertize "%m" 'face 'font-lock-string-face
+                 'help-echo buffer-file-coding-system))
+      "] "
+
+      "["
+      '(:eval (propertize (if overwrite-mode "Ovr" "Ins")
+                'face 'font-lock-preprocessor-face
+                'help-echo (concat "Buffer is in "
+                             (if overwrite-mode "overwrite" "insert" " mode"))))
+      '(:eval (when (buffer-modified-p)
+                (concat "," (propertize "Mod"
+                              'face 'font-lock-warning-face
+                              'help-echo "Buffer has beem modified"))))
+      '(:eval (when buffer-read-only
+                (concat "," (propertize "RO"
+                              'face 'font-lock-type-face
+                              'help-echo "Buffer is read-only"))))
+      "] ["
+
+      '(:eval (propertize (format-time-string "%H:%M")
+                'face 'font-lock-keyword-face
+                'help-echo
+                (concat (format-time-string "%c; ")
+                        (emacs-uptime "Uptime:%hh"))))
+
+      "] |"
+      '(:eval (nyan-create))
+      "||"
+      minor-mode-alist
+      " |"
+  ))
+  #+END_SRC
+  
+* Company
+   
+  I use company-mode as my auto completion interface. I want to get
+  suggestions right after I type a letter, hence the no delay settings and
+  short prefix length.
+   
+#+BEGIN_SRC emacs-lisp
+  (require 'company)
+  (setq company-idle-delay 0
+        company-echo-delay 0
+        company-minimum-prefix-length 1
+        company-show-numbers t)
+
+  (add-hook 'after-init-hook 'global-company-mode)
+#+END_SRC
+
+  The default backends list of company mode is a little bit complex so I remove
+  some useless backends for me.
+
+  Company-yasnippet will block the other backends, so I remove it from
+  company-backends. Instead of add into backends list I define a specific key
+  binding for it.
+
+#+BEGIN_SRC emacs-lisp
+  (defvar marvin/company-backends '(company-elisp
+                                    company-capf
+                                    company-files
+                                    company-keywords
+                                    ;; company-yasnippet
+                                    marvin/company-org
+                                    company-dabbrev-code
+                                    company-dabbrev))
+
+  (add-hook 'after-init-hook '(lambda ()
+                                (setq-default company-backends marvin/company-backends)))
+
+#+END_SRC
+
+  In org-mode company mode doesn't work well, so I see this [[https://emacs.stackexchange.com/questions/21171/company-mode-completion-for-org-keywords][post]].
+
+#+BEGIN_SRC emacs-lisp
+  (require 'org)
+
+  (defun marvin/company-org (command &optional arg &rest ignored)
+    (interactive (list 'interactive))
+    (cl-case command
+      (interactive (company-begin-backend 'org-keyword-backend))
+      (prefix (and (eq major-mode 'org-mode)
+                   (cons (company-grab-line "^#\\+\\(\\w*\\)" 1)
+                         t)))
+      (candidates (mapcar #'upcase
+                          (cl-remove-if-not
+                           (lambda (c) (string-prefix-p arg c))
+                           (pcomplete-completions))))
+      (ignore-case t)
+      (duplicates t)))
+#+END_SRC
+
+** Keybindings
+
+#+BEGIN_SRC emacs-lisp
+  (define-key company-mode-map (kbd "C-c y") 'company-yasnippet)
+#+END_SRC
+
+* Google Translate
+
+  This package allows to translate the strings using Google Translate service
+  directly from GNU Emacs.
+
+#+begin_src emacs-lisp
+  (require 'google-translate)
+  (require 'google-translate-default-ui)
+  (setq google-translate-default-source-language "en"
+        google-translate-default-target-language "zh-TW")
+#+end_src
+
+** Keybindings
+
+#+begin_src emacs-lisp
+  (define-key marvin-bindings-map (kbd "C-c g t") 'google-translate-at-point)
+#+end_src
+
+* Helm
+   
+  *Helm* is an Emacs framework for incremental completions and narrowing
+  selections. It provides an easy-to-use API for developers wishing to build
+  their own Helm applications in Emacs, powerful search tools and dozens of
+  already built-in commands providing completion to almost everything. It is a
+  must-have for anyone using Emacs as a main work environment. Helm has been
+  widely adopted by many Emacs power-users. It is available in Melpa and can
+  be easily installed from the Emacs package manager.
+
+ #+BEGIN_SRC emacs-lisp
+ (require 'helm-config)
+ (require 'helm)
+
+ (helm-autoresize-mode t)
+
+ (setq helm-M-x-fuzzy-match t
+       helm-buffers-fuzzy-matching t
+       helm-recentf-fuzzy-match t)
+
+ (helm-mode 1)
+ #+END_SRC
+** Keybindings
+
+#+begin_src emacs-lisp
+  (define-key marvin-bindings-map (kbd "C-x b") 'helm-mini)
+  (define-key marvin-bindings-map (kbd "C-x C-f") 'helm-find-files)
+  (define-key marvin-bindings-map (kbd "M-x") 'helm-M-x)
+  (define-key marvin-bindings-map (kbd "C-c h g") 'helm-google-suggest)
+#+end_src
+
+* Yasnippet
+
+#+begin_src emacs-lisp
+  (require 'yasnippet)
+  (add-hook 'after-init-hook 'yas-global-mode)
+#+end_src
+
+  Automatically insert =GPL= when open a new empty file if it is available.
+
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'find-file-hook
+            '(lambda ()
+               (when (and (buffer-file-name)
+                          (not (file-exists-p (buffer-file-name)))
+                          (= (point-max) 1))
+                 (let ((header-snippet "GPL")
+                       (yas/fallback-behavior 'return-nil))
+                   (insert header-snippet)
+                   ;; if can't expand snippet, delete instert string
+                   (if (not (yas/expand))
+                       (delete-region (point-min) (point-max)))))))
+#+END_SRC
+
+* Ox Reveal
+
+  Ox-reveal is an amazing tool to make a slide with org-mode and reveal.js. It
+  makes everything easy but beautiful.
+
+#+begin_src emacs-lisp
+  (require 'ox-reveal)
+  (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/")
+  (setq org-reveal-mathjax t)
+#+end_src
+
+* Flycheck
+  
+  Flycheck is an on-the-fly syntax checking tool. It support a lot of languages
+  (including c++ irony), but I don't like to see lots of warning in elisp so I
+  turn it off in Emacs Lisp Mode.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'flycheck)
+  (add-hook 'after-init-hook 'global-flycheck-mode)
+  (add-hook 'emacs-lisp-mode-hook '(lambda ()
+                                     (interactive)
+                                     (flycheck-mode -1)))
+#+END_SRC
+
+* C/C++ Mode
+
+  Enable C/C++ Headers completions by using =company-c-headers= package.
+  The path of system headers is different from each OS, so we have to set it
+  ourselves.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'company-c-headers)
+
+  (defvar c-system-include-path
+     '("/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1"
+       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1/x86_64-pc-linux-gnu"
+       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1/backward"
+       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include"
+       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include-fixed"
+       "/usr/include"))
+
+  (dolist (path c-system-include-path)
+    (add-to-list 'company-c-headers-path-system path))
+#+END_SRC
+
+** Irony
+  
+  I use Irony for code completion. It is powered by /libclang/ and also provides
+  precise and not slow completion.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'irony)
+  (require 'company-irony)
+  (require 'company-irony-c-headers)
+  (require 'irony-eldoc)
+
+  (add-hook 'c++-mode-hook 'irony-mode)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  (add-to-list 'marvin/company-backends '(company-irony company-irony-c-headers))
+  (add-hook 'irony-mode-hook #'irony-eldoc)
+#+END_SRC
+
+  Irony can also do code syntax and it works with flycheck very well.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'flycheck-irony)
+  (add-hook 'flycheck-mode-hook 'flycheck-irony-setup)
+#+END_SRC
+
+** Rtags
+
+   I use Rtags for code navigation. It is also powered by /clang/ and it also
+   provides code completion. However, I think Irony is faster than Rtags, so I
+   only use Rtags for navigation purpose.
+
+#+BEGIN_SRC emacs-lisp
+  (require 'rtags)
+
+  (rtags-enable-standard-keybindings)
+  (setq rtags-autostart-diagnostics t)
+  (rtags-diagnostics)
+  (setq rtags-completions-enabled t)
+  (rtags-start-process-unless-running)
+#+END_SRC
+
+  If rtags doesn't work, through this function navigation can still work but a
+  little bit slow.
+
+#+BEGIN_SRC emacs-lisp
+  (defun marvin/c-find-symbol-at-point ()
+    (interactive)
+    (deactivate-mark)
+    (ring-insert find-tag-marker-ring (point-marker))
+    (or (and (require 'rtags nil t)
+             (rtags-find-symbol-at-point))
+        (and (require 'semantic/ia)
+             (condition-case nil
+                 (semantic-ia-fast-jump (point))
+               (error nil)))))
+#+END_SRC
+
+** Keybindings
+
+#+BEGIN_SRC emacs-lisp
+  (defun marvin/c++-key-bindings ()
+    "my custom keybindings for c++-mode"
+    (local-set-key (kbd "C-c C-c") 'compile)
+    (local-set-key (kbd "C-c c") '(lambda () (interactive)
+                                    (compile "bear make")))
+    (local-set-key (kbd "C-c d") 'comment-line)
+    (local-set-key (kbd "C-c D") 'comment-region)
+    (local-set-key (kbd "M-.") 'marvin/c-find-symbol-at-point))
+
+  (add-hook 'c++-mode-hook 'marvin/c++-key-bindings)
+#+END_SRC
+
+* Magit
+
+#+BEGIN_SRC emacs-lisp
+  (require 'magit)
+#+END_SRC
+
+* Line Moving
+
+  Emacs' built-in moving line function /transpose-lines/ is strangs so I add
+  town function to enhance this feature.
+
+#+BEGIN_SRC emacs-lisp
+  (defun move-line-up ()
+    "Move up the current line."
+    (interactive)
+    (transpose-lines 1)
+    (forward-line -2))
+
+  (defun move-line-down ()
+    "Move down the current line."
+    (interactive)
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1))
+#+END_SRC
+
+** Keybindings
+
+#+BEGIN_SRC emacs-lisp
+  (define-key marvin-bindings-map (kbd "M-<up>") 'move-line-up)
+  (define-key marvin-bindings-map (kbd "M-<down>") 'move-line-down)
+#+END_SRC
+
