@@ -524,6 +524,7 @@
 
 #+BEGIN_SRC emacs-lisp
   (require 'magit)
+  (define-key marvin-bindings-map (kbd "C-c j") 'magit-status)
 #+END_SRC
 
 * Line Moving
