@@ -1,0 +1,31 @@
+* A Simple Emacs Configuration File written in Org-babel
+** Requirments
+ |-------+-------------|
+ | Item  | Version     |
+ |-------+-------------|
+ | Emacs | >= 26.1     |
+ | Rtags | >= 2.19.126 |
+ | Menlo | Any         |
+ |-------+-------------|
+** How to install
+ See dotfiles.org
+ A few changes in appearance and key-bindings
+** Features
+ Focas on C++ programming
+ Google translate mode
+ Helm company-mode Yasnippet
+ GPL snippet for c++-mode
+ company-mode
+*** C++ Mode
+ company-c-headers
+ irony
+ company-irony
+ flycheck-irony
+ rtags (in progess)
+** TODO
+ |---------------------------|
+ | repair rtags              |
+ | python                    |
+ | lsp-mode                  |
+ | c++ interactive test mode |
+ |---------------------------|
