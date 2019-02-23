@@ -63,6 +63,10 @@
 				flycheck-irony
 				helm-rtags
 				magit
+                                web-mode
+                                yaml-mode
+                                markdown-mode
+                                markdown-mode+
 				))
   (dolist (package marvin/package-list)
     (unless (package-installed-p package)
@@ -204,11 +208,9 @@
   (setq-default frame-title-format (list "All Hail Emacs!"))
   #+end_src
 
-  I copied this [[http://emacs-fu.blogspot.com/2011/08/customizing-mode-line.html][post]] and added =nyan-mode= to my mode line.
-   
+  My mode line setting -> 
 
   #+BEGIN_SRC emacs-lisp
-    (require 'nyan-mode)
 
     (defvar minor-mode-show nil)
 
@@ -260,20 +262,18 @@
                         (emacs-uptime "Uptime:%hh"))))
 
       "] |"
-      '(:eval (nyan-create))
-      "||"
       minor-mode-alist
       " |"
   ))
   #+END_SRC
-  
+
 * Company
-   
+  
   I use company-mode as my auto completion interface. I want to get
   suggestions right after I type a letter, hence the no delay settings and
   short prefix length.
    
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp 
   (require 'company)
   (setq company-idle-delay 0
         company-echo-delay 0
@@ -489,21 +489,6 @@
   (rtags-start-process-unless-running)
 #+END_SRC
 
-  If rtags doesn't work, through this function navigation can still work but a
-  little bit slow.
-
-#+BEGIN_SRC emacs-lisp
-  (defun marvin/c-find-symbol-at-point ()
-    (interactive)
-    (deactivate-mark)
-    (ring-insert find-tag-marker-ring (point-marker))
-    (or (and (require 'rtags nil t)
-             (rtags-find-symbol-at-point))
-        (and (require 'semantic/ia)
-             (condition-case nil
-                 (semantic-ia-fast-jump (point))
-               (error nil)))))
-#+END_SRC
 
 ** Keybindings
 
@@ -521,6 +506,8 @@
 #+END_SRC
 
 * Magit
+
+  Press /C-c j/ to open a Magit control panel.
 
 #+BEGIN_SRC emacs-lisp
   (require 'magit)
