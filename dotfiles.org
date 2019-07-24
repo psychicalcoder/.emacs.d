@@ -49,24 +49,24 @@
 				yasnippet
 				yasnippet-snippets
 				helm
-				ox-reveal
 				htmlize
 				company-c-headers
-				nyan-mode
 				rtags
-				company-rtags
 				irony
-				company-irony
 				company-irony-c-headers
-				irony-eldoc
 				flycheck
-				flycheck-irony
 				helm-rtags
 				magit
                                 web-mode
                                 yaml-mode
                                 markdown-mode
                                 markdown-mode+
+                                exwm
+                                multi-term
+                                company-lsp
+                                lsp-mode
+                                lsp-ui
+                                helm-lsp
 				))
   (dolist (package marvin/package-list)
     (unless (package-installed-p package)
@@ -198,8 +198,30 @@
   Use /Menlo/ and /Source Han Sans/ as default and Chinese font.
 
   #+begin_src emacs-lisp
-  (set-face-attribute 'default nil :font "Menlo 10")
-  (set-fontset-font t 'han (font-spec :family "Source Han Sans"))
+    (defvar emacs-english-font "Menlo")
+    (defvar emacs-cjk-font "Source Han Sans")
+
+    (defvar emacs-font-size-pair '(15 . 18))
+
+    (defun set-font (english chinese size-pair)
+      (set-frame-font (format "%s:pixelsize=%d" english (car size-pair)) t)
+      (dolist (charset '(kana han symbol cjk-misc bopomofo))
+        (set-fontset-font (frame-parameter nil 'font) charset
+                          (font-spec :family chinese :size (cdr size-pair)))))
+
+    (defun init-font()
+      (set-font emacs-english-font emacs-cjk-font emacs-font-size-pair))
+
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (select-frame frame)
+                (when (display-graphic-p frame)
+                  (init-font))))
+
+    (add-hook 'emacs-startup-hook 'init-font)
+
+
+
   #+end_src
 
   Set *All Hail Emacs* as the windows title.
@@ -403,19 +425,8 @@
                        (delete-region (point-min) (point-max)))))))
 #+END_SRC
 
-* Ox Reveal
-
-  Ox-reveal is an amazing tool to make a slide with org-mode and reveal.js. It
-  makes everything easy but beautiful.
-
-#+begin_src emacs-lisp
-  (require 'ox-reveal)
-  (setq org-reveal-root "http://cdn.jsdelivr.net/reveal.js/3.0.0/")
-  (setq org-reveal-mathjax t)
-#+end_src
-
 * Flycheck
-  
+
   Flycheck is an on-the-fly syntax checking tool. It support a lot of languages
   (including c++ irony), but I don't like to see lots of warning in elisp so I
   turn it off in Emacs Lisp Mode.
@@ -429,66 +440,39 @@
 #+END_SRC
 
 * C/C++ Mode
-
-  Enable C/C++ Headers completions by using =company-c-headers= package.
-  The path of system headers is different from each OS, so we have to set it
-  ourselves.
-
-#+BEGIN_SRC emacs-lisp
-  (require 'company-c-headers)
-
-  (defvar c-system-include-path
-     '("/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1"
-       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1/x86_64-pc-linux-gnu"
-       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include/g++-v7.3.1/backward"
-       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include"
-       "/usr/lib/gcc/x86_64-pc-linux-gnu/7.3.1/include-fixed"
-       "/usr/include"))
-
-  (dolist (path c-system-include-path)
-    (add-to-list 'company-c-headers-path-system path))
-#+END_SRC
+  
+  I used to use Irony+Semantics+Rtags+Company+Flycheck, but now lsp-mode is
+  good.
 
 ** Irony
   
-  I use Irony for code completion. It is powered by /libclang/ and also provides
-  precise and not slow completion.
+  Now I only use =company-irony-c-headers= to auto-complete headers.
+  The other completion jobs are taken by =lsp-mode=.
 
 #+BEGIN_SRC emacs-lisp
   (require 'irony)
-  (require 'company-irony)
   (require 'company-irony-c-headers)
-  (require 'irony-eldoc)
 
   (add-hook 'c++-mode-hook 'irony-mode)
   (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-  (add-to-list 'marvin/company-backends '(company-irony company-irony-c-headers))
-  (add-hook 'irony-mode-hook #'irony-eldoc)
-#+END_SRC
-
-  Irony can also do code syntax and it works with flycheck very well.
-
-#+BEGIN_SRC emacs-lisp
-  (require 'flycheck-irony)
-  (add-hook 'flycheck-mode-hook 'flycheck-irony-setup)
+  (add-to-list 'marvin/company-backends 'company-irony-c-headers)
 #+END_SRC
 
 ** Rtags
 
-   I use Rtags for code navigation. It is also powered by /clang/ and it also
-   provides code completion. However, I think Irony is faster than Rtags, so I
-   only use Rtags for navigation purpose.
+   I use Rtags for code navigation. It is based on /clanglib/ and it also
+   provides code completion. However, I think lsp-mode is faster than Rtags, so I
+   only use Rtags for navigation purposem. Though lsp-mode can also do code
+   navigation, Rtags is less annoying. That's why I haven't remove rtags from
+   my emacs config. 
+ 
+   I gave up using the autostart /rdm/ function because it sometimes doesn't
+   work and lsp-mode is good enough for some little project development. 
 
 #+BEGIN_SRC emacs-lisp
   (require 'rtags)
-
-  (rtags-enable-standard-keybindings)
-  (setq rtags-autostart-diagnostics t)
-  (rtags-diagnostics)
-  (setq rtags-completions-enabled t)
-  (rtags-start-process-unless-running)
+  (setq rtags-path "~/software/rtags/bin")
 #+END_SRC
-
 
 ** Keybindings
 
@@ -497,10 +481,10 @@
     "my custom keybindings for c++-mode"
     (local-set-key (kbd "C-c C-c") 'compile)
     (local-set-key (kbd "C-c c") '(lambda () (interactive)
-                                    (compile "bear make")))
+                                    (compile "make")))
     (local-set-key (kbd "C-c d") 'comment-line)
     (local-set-key (kbd "C-c D") 'comment-region)
-    (local-set-key (kbd "M-.") 'marvin/c-find-symbol-at-point))
+    (local-set-key (kbd "M-.") 'rtags-find-symbol-at-point))
 
   (add-hook 'c++-mode-hook 'marvin/c++-key-bindings)
 #+END_SRC
@@ -539,5 +523,50 @@
 #+BEGIN_SRC emacs-lisp
   (define-key marvin-bindings-map (kbd "M-<up>") 'move-line-up)
   (define-key marvin-bindings-map (kbd "M-<down>") 'move-line-down)
+#+END_SRC
+
+* EXWM
+
+Temporarily disabled EXWM because I'm using KDE Plasma.
+
+#+BEGIN_SRC emacs-lisp
+;;  (require 'exwm)
+;;  (require 'exwm-config)
+;;
+;;  (exwm-config-default)
+#+END_SRC
+
+* Multi-term
+
+#+BEGIN_SRC emacs-lisp 
+  (require 'multi-term)
+  (setq multi-term-porgram "/bin/bash")
+  (setq system-uses-terminfo nil)
+#+END_SRC
+
+* LSP-mode
+
+  Now lsp-mode is powerful enough for me, so I emigrated from irony to lsp-mode
+  for c++. 
+
+#+BEGIN_SRC emacs-lisp
+  (require 'lsp-mode)
+  (require 'lsp-ui)
+  (require 'company-lsp)
+
+  (setq lsp-ui-doc-enable t
+        lsp-ui-peek-enable nil
+        lsp-ui-sideline-enable nil
+        lsp-ui-imenu-enable nil
+        lsp-ui-flycheck-enable t
+        lsp-prefer-flymake nil
+        )
+
+  (add-to-list 'marvin/company-backends 'company-lsp)
+  (push 'company-lsp company-backends)
+  (add-hook 'c++-mode-hook #'lsp)
+
+  (require 'helm-lsp)
+
 #+END_SRC
 

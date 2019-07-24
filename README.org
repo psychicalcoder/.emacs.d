@@ -11,21 +11,16 @@
  See dotfiles.org
  A few changes in appearance and key-bindings
 ** Features
- Focas on C++ programming
- Google translate mode
- Helm company-mode Yasnippet
- GPL snippet for c++-mode
- company-mode
+ | Focas on C++ programming    |
+ | Google Translate Mode       |
+ | Helm company-mode Yasnippet |
+ | GPL snippet for c++-mode    |
+ | company-mode                |
 *** C++ Mode
- company-c-headers
- irony
- company-irony
- flycheck-irony
- rtags (in progess)
+ | irony-c-header         |
+ | rtags                  |
+ | lsp-mode (clangd)      |
+ | flycheck with lsp-mode |
 ** TODO
- |---------------------------|
- | repair rtags              |
  | python                    |
- | lsp-mode                  |
  | c++ interactive test mode |
- |---------------------------|

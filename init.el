@@ -7,7 +7,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (lsp-mode json-mode org-plus-contrib company-c-headers helm-company yasnippet-snippets yaml-mode web-mode rainbow-delimiters markdown-mode+ helm google-translate f elpy doom-themes))))
+    (helm-lsp multi-term exwm lsp-mode json-mode org-plus-contrib company-c-headers helm-company yasnippet-snippets yaml-mode web-mode rainbow-delimiters markdown-mode+ helm google-translate f elpy doom-themes))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
