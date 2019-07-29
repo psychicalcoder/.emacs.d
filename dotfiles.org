@@ -67,6 +67,8 @@
                                 lsp-mode
                                 lsp-ui
                                 helm-lsp
+                                smart-mode-line
+                                smart-mode-line-atom-one-dark-theme
 				))
   (dolist (package marvin/package-list)
     (unless (package-installed-p package)
@@ -177,11 +179,11 @@
 ** Bindings for built-ins
 
   #+begin_src emacs-lisp
-  (define-key marvin-bindings-map (kbd "C-x ,") 'previous-buffer)
-  (define-key marvin-bindings-map (kbd "C-x .") 'next-buffer)
-  (define-key marvin-bindings-map (kbd "C-x /") '(lambda () 
-                                                   (interactive)
-                                                   (kill-buffer)))
+    (define-key marvin-bindings-map (kbd "C-x ,") 'previous-buffer)
+    (define-key marvin-bindings-map (kbd "C-x .") 'next-buffer)
+    (define-key marvin-bindings-map (kbd "C-x /") '(lambda () 
+                                                     (interactive)
+                                                     (kill-buffer-and-window)))
   #+end_src
 
 * Visual
@@ -234,60 +236,76 @@
 
   #+BEGIN_SRC emacs-lisp
 
-    (defvar minor-mode-show nil)
+      (defvar minor-mode-show nil)
 
-    (defface mode-line-buffer-name
-      '((t :background "dark green" :foreground "light green"))
-      "Face used for buffer name part of the mode line."
-      :group 'mode-line-faces
-      :group 'basic-faces)
+      (defface mode-line-buffer-name
+        '((t :background "dark green" :foreground "light green"))
+        "Face used for buffer name part of the mode line."
+        :group 'mode-line-faces
+        :group 'basic-faces)
 
-    (setq-default mode-line-format 
-      (list '(:eval (propertize "%b" 'face 'mode-line-buffer-name
-                                'help-echo (buffer-file-name)))
+      (setq-default mode-line-format 
+        (list '(:eval (propertize "%b" 'face 'mode-line-buffer-name
+                                  'help-echo (buffer-file-name)))
 
-      " ("
-        (propertize "%l" 'face 'font-lock-type-face) ","
-        (propertize "%c" 'face 'font-lock-type-face)
-      ") "
+        " ("
+          (propertize "%l" 'face 'font-lock-type-face) ","
+          (propertize "%c" 'face 'font-lock-type-face)
+        ") "
 
-      "["
-      (propertize "%p" 'face 'font-lock-constant-face)
-      "/"
-      (propertize "%I" 'face 'font-lock-constant-face)
-      "] "
+        "["
+        (propertize "%p" 'face 'font-lock-constant-face)
+        "/"
+        (propertize "%I" 'face 'font-lock-constant-face)
+        "] "
 
-      "["
-      '(:eval (propertize "%m" 'face 'font-lock-string-face
-                 'help-echo buffer-file-coding-system))
-      "] "
+        "["
+        '(:eval (propertize "%m" 'face 'font-lock-string-face
+                   'help-echo buffer-file-coding-system))
+        "] "
 
-      "["
-      '(:eval (propertize (if overwrite-mode "Ovr" "Ins")
-                'face 'font-lock-preprocessor-face
-                'help-echo (concat "Buffer is in "
-                             (if overwrite-mode "overwrite" "insert" " mode"))))
-      '(:eval (when (buffer-modified-p)
-                (concat "," (propertize "Mod"
-                              'face 'font-lock-warning-face
-                              'help-echo "Buffer has beem modified"))))
-      '(:eval (when buffer-read-only
-                (concat "," (propertize "RO"
-                              'face 'font-lock-type-face
-                              'help-echo "Buffer is read-only"))))
-      "] ["
+        "["
+        '(:eval (propertize (if overwrite-mode "Ovr" "Ins")
+                  'face 'font-lock-preprocessor-face
+                  'help-echo (concat "Buffer is in "
+                               (if overwrite-mode "overwrite" "insert" " mode"))))
+        '(:eval (when (buffer-modified-p)
+                  (concat "," (propertize "Mod"
+                                'face 'font-lock-warning-face
+                                'help-echo "Buffer has beem modified"))))
+        '(:eval (when buffer-read-only
+                  (concat "," (propertize "RO"
+                                'face 'font-lock-type-face
+                                'help-echo "Buffer is read-only"))))
+        "] ["
 
-      '(:eval (propertize (format-time-string "%H:%M")
-                'face 'font-lock-keyword-face
-                'help-echo
-                (concat (format-time-string "%c; ")
-                        (emacs-uptime "Uptime:%hh"))))
+        '(:eval (propertize (format-time-string "%H:%M")
+                  'face 'font-lock-keyword-face
+                  'help-echo
+                  (concat (format-time-string "%c; ")
+                          (emacs-uptime "Uptime:%hh"))))
 
-      "] |"
-      minor-mode-alist
-      " |"
-  ))
+        "]"
+        '(:eval `(vc-mode vc-mode))
+        " ["
+        minor-mode-alist
+        "]"
+
+    ))
   #+END_SRC
+
+** Smart mode line
+
+#+BEGIN_SRC emacs-lisp
+  (require 'smart-mode-line)
+  (setq sml/theme 'atom-one-dark
+        sml/shorten-directory t
+        sml/shorten-modes t
+        sml/no-confirm-load-theme t
+        sml/vc-mode-show-backend t
+        )
+  (sml/setup t)
+#+END_SRC
 
 * Company
   
@@ -297,8 +315,7 @@
    
 #+BEGIN_SRC emacs-lisp 
   (require 'company)
-  (setq company-idle-delay 0
-        company-echo-delay 0
+  (setq company-idle-delay 0.3
         company-minimum-prefix-length 1
         company-show-numbers t)
 
@@ -455,7 +472,7 @@
 
   (add-hook 'c++-mode-hook 'irony-mode)
   (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-  (add-to-list 'marvin/company-backends 'company-irony-c-headers)
+  ;; moved add-to-list to lsp-mode secion.
 #+END_SRC
 
 ** Rtags
@@ -484,7 +501,8 @@
                                     (compile "make")))
     (local-set-key (kbd "C-c d") 'comment-line)
     (local-set-key (kbd "C-c D") 'comment-region)
-    (local-set-key (kbd "M-.") 'rtags-find-symbol-at-point))
+    (local-set-key (kbd "M-.") 'rtags-find-symbol-at-point)
+    (local-set-key (kbd "C-.") 'lsp-ui-peek-find-definitions))
 
   (add-hook 'c++-mode-hook 'marvin/c++-key-bindings)
 #+END_SRC
@@ -502,6 +520,7 @@
 
   Emacs' built-in moving line function /transpose-lines/ is strangs so I add
   town function to enhance this feature.
+
 
 #+BEGIN_SRC emacs-lisp
   (defun move-line-up ()
@@ -555,18 +574,28 @@ Temporarily disabled EXWM because I'm using KDE Plasma.
   (require 'company-lsp)
 
   (setq lsp-ui-doc-enable t
-        lsp-ui-peek-enable nil
+        lsp-ui-doc-use-childframe t
+        lsp-ui-doc-use-childframe 'top
+        lsp-ui-doc-include-signature t
+        lsp-ui-peek-enable t
+        lsp-ui-peek-list-width 60
+        lsp-ui-peek-peek-height 25
         lsp-ui-sideline-enable nil
-        lsp-ui-imenu-enable nil
         lsp-ui-flycheck-enable t
+        lsp-ui-flycheck-list-position 'right
+        lsp-ui-flycheck-live-reporting t
         lsp-prefer-flymake nil
         )
 
   (add-to-list 'marvin/company-backends 'company-lsp)
-  (push 'company-lsp company-backends)
+  (add-to-list 'marvin/company-backends 'company-irony-c-headers)
   (add-hook 'c++-mode-hook #'lsp)
+
+  (setq company-lsp-async t
+        company-lsp-cache-candidates nil)
 
   (require 'helm-lsp)
 
 #+END_SRC
+
 
