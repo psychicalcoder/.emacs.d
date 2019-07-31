@@ -285,14 +285,22 @@
                   (concat (format-time-string "%c; ")
                           (emacs-uptime "Uptime:%hh"))))
 
-        "]"
-        '(:eval `(vc-mode vc-mode))
-        " ["
+        "] ["
         minor-mode-alist
-        "]"
+        " ]"
+        '(:eval (when vc-mode
+                  (propertize "["
+                              'face 'font-lock-type-face)))
+        'vc-mode
+  
+        '(:eval (when vc-mode
+                  (propertize " ]"
+                              'face 'font-lock-type-face)))
 
     ))
   #+END_SRC
+
+
 
 ** Smart mode line
 
