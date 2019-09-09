@@ -379,7 +379,7 @@
 #+END_SRC
 
 * Google Translate
-
+  
   This package allows to translate the strings using Google Translate service
   directly from GNU Emacs.
 
