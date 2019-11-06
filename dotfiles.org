@@ -193,57 +193,101 @@
   (load-theme 'doom-molokai t)
   #+end_src
 
-  Use /Menlo/ and /Source Han Sans/ as default and Chinese font.
+** Font 
+
+  I use /Menlo/ and /Noto Sans CJK TC/ as my English and Chinese default font.
+  I separatly set these fonts in specific size to avoid Chinese aligning
+  problems in org-table.
 
   #+begin_src emacs-lisp
-    (defvar emacs-english-font "Menlo")
-    (defvar emacs-cjk-font "Source Han Sans")
+     (defvar emacs-english-font "Menlo")
+     (defvar emacs-cjk-font "Noto Sans CJK TC")
 
-    (defvar emacs-font-size-pair '(18 . 21))
+     (defvar emacs-font-size-pair '(17 . 20)
+       "(english . chinese)")
 
-    (defun set-font (english chinese size-pair)
-      (set-frame-font (format "%s:pixelsize=%d" english (car size-pair)) t)
-      (dolist (charset '(kana han symbol cjk-misc bopomofo))
-        (set-fontset-font (frame-parameter nil 'font) charset
-                          (font-spec :family chinese :size (cdr size-pair)))))
+     (defvar emacs-font-size-pair-list
+       '((14 . 16) (15 . 18) (17 . 20) (18 . 22) (20 . 24)))
 
-    (defun init-font()
-      (set-font emacs-english-font emacs-cjk-font emacs-font-size-pair))
+     (defun font-exist-p (fontname)
+       "Test if this font is exist or not."
+       (if (or (not fontname) (string= fontname ""))
+           nil
+         (if (not (x-list-fonts fontname)) nil t)))
 
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (select-frame frame)
-                (when (display-graphic-p frame)
-                  (init-font))))
 
-    (add-hook 'emacs-startup-hook 'init-font)
+     (defun set-font (english chinese size-pair)
+       "Setup emacs English and Chinese font on x windows-system"
+
+       (if (font-exist-p english)
+           (set-frame-font (format "%s:pixelsize=%d" english (car size-pair)) t)
+         (message (concat "Missing font: " english)))
+
+       (if (font-exist-p chinese)
+           (dolist (charset '(kana han symbol cjk-misc bopomofo))
+             (set-fontset-font (frame-parameter nil 'font) charset
+                                 (font-spec :family chinese :size (cdr size-pair))))
+         (message (concat "Missing font: " chinese))))
+
+     (defun init-font()
+       (set-font emacs-english-font emacs-cjk-font emacs-font-size-pair))
+
+     (defun emacs-step-font-size (step)
+        "Increase/Decrease emacs's font size."
+        (let ((scale-steps emacs-font-size-pair-list))
+          (if (< step 0) (setq scale-steps (reverse scale-steps)))
+          (setq emacs-font-size-pair
+                    (or (cadr (member emacs-font-size-pair scale-steps))
+                       emacs-font-size-pair))
+             (when emacs-font-size-pair
+               (message "emacs font size set to %.1f" (car emacs-font-size-pair))
+               (init-font))))
+
+         (defun increase-emacs-font-size ()
+           "Increase emacs's font-size according emacs-font-size-pair-list."
+           (interactive) (emacs-step-font-size 1))
+
+         (defun decrease-emacs-font-size ()
+           "Decrease emacs's font-size according emacs-font-size-pair-list."
+           (interactive) (emacs-step-font-size -1))
+
+         (add-hook 'after-make-frame-functions
+                   (lambda (frame)
+                     (select-frame frame)
+                     (when (display-graphic-p frame)
+                       (init-font))))
+
+         (add-hook 'emacs-startup-hook 'init-font)
   #+end_src
 
-  Set *All Hail Emacs* as the windows title.
-   
-  #+begin_src emacs-lisp
-  (setq-default frame-title-format (list "All Hail Emacs!"))
-  #+end_src
-
-  My mode line setting -> 
-
-  #+BEGIN_SRC emacs-lisp
-
-      (defvar minor-mode-show nil)
-
-      (defface mode-line-buffer-name
-        '((t :background "dark green" :foreground "light green"))
-        "Face used for buffer name part of the mode line."
-        :group 'mode-line-faces
-        :group 'basic-faces)
-
-    ;; nice scrolling from bbatsov/prelude/core/prelude-ui.el
-    (setq scroll-magirn 0
-          scroll-conservatively 100000
-          scroll-preserve-screen-position 1)
-  #+END_SRC
+*** Keybindings
 
 #+begin_src emacs-lisp
+  (define-key marvin-bindings-map (kbd "C-=") 'increase-emacs-font-size)
+  (define-key marvin-bindings-map (kbd "C--") 'decrease-emacs-font-size)
+#+end_src
+
+** Title
+
+   Set *All Hail Emacs* as the windows title.
+   
+#+begin_src emacs-lisp
+  (setq-default frame-title-format (list "All Hail Emacs!"))
+#+end_src
+
+** Modeline
+
+   Define the colors of the modeline.
+
+#+BEGIN_SRC emacs-lisp
+  (defvar minor-mode-show nil)
+
+  (defface mode-line-buffer-name
+    '((t :background "dark green" :foreground "light green"))
+    "Face used for buffer name part of the mode line."    
+    :group 'mode-line-faces
+    :group 'basic-faces)
+
   (set-face-attribute 'mode-line nil
                       :background "#353644"
                       :foreground "white"
@@ -257,7 +301,12 @@
                       :box '(:line-width 6 :color "#565063")
                       :overline nil
                       :underline nil)
+#+END_SRC
 
+   Define the modeline format
+   =date time version-control buffername (row,column) [percent/total-letter] Major-mode=
+
+#+begin_src emacs-lisp
   (setq-default mode-line-format
                 (list
                  '(:eval (propertize (format-time-string " %b %d %H:%M ")
@@ -291,7 +340,9 @@
                  ))
 #+end_src
 
-** Smart mode line
+*** Smart mode line
+
+    Use Smart-mode-line to make the mode-line more beautiful.
 
 #+BEGIN_SRC emacs-lisp
   (require 'smart-mode-line)
@@ -493,13 +544,20 @@
 #+begin_src emacs-lisp
   (defun marvin/c++-compile-run ()
     (local-set-key (kbd "C-c c") '(lambda () (interactive)
-                                      (marvin/compile "g++ -O2 -std=c++14 ")))
-    (local-set-key (kbd "C-c e") 'marvin/run))
+                                    (marvin/compile "g++ -O2 -std=c++14 ")))
+    (local-set-key (kbd "C-c e") 'marvin/run)
+    (local-set-key (kbd "C-c r") '(lambda () (interactive)
+                                    (marvin/compile "g++ -O2 -std=c++14 ")
+                                    (marvin/run))))
 
   (defun marvin/c-compile-run ()
     (local-set-key (kbd "C-c c") '(lambda () (interactive)
-                                     (marvin/compile "gcc")))
-    (local-set-key (kbd "C-c e") 'marvin/run))
+                                    (marvin/compile "gcc")))
+    (local-set-key (kbd "C-c e") 'marvin/run)
+    (local-set-key (kbd "C-c r") '(lambda () (interactive)
+                                    (marvin/compile "gcc")
+                                    (marvin/run))))
+
 
   (add-hook 'c++-mode-hook 'marvin/c++-compile-run)
   (add-hook 'c-mode-hook 'marvin/c-compile-run)
@@ -546,7 +604,7 @@
 
 #+BEGIN_SRC emacs-lisp
   (require 'multi-term)
-  (setq multi-term-porgram "/bin/bash")
+  (setq multi-term-program "/bin/bash")
   (setq system-uses-terminfo nil)
 #+END_SRC 
 
@@ -578,6 +636,7 @@
   (add-to-list 'marvin/company-backends 'company-irony-c-headers)
   (add-hook 'c++-mode-hook #'lsp)
   (add-hook 'c-mode-hook #'lsp)
+  (add-hook 'python-mode-hook #'lsp)
 
   (setq company-lsp-async t
         company-lsp-cache-candidates nil)
