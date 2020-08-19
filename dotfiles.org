@@ -3,9 +3,10 @@
 #+EMAIL: psychicalcoder@gmail.com
 #+BABEL: :cache yes
 #+PROPERTY: header-args :tangle yes
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/setup/theme-readtheorg.setup
 
 * About
-
+  
   This is my Emacs configuration file written in Org-mode. Org-babel provide a
   good semi-literate programming environment. Insert 
   #+BEGIN_SRC org :tangle no
@@ -18,65 +19,73 @@
 
 * Packages
    
-  Managing extensions for Emacs with built-in package manager =package=.
+   Managing extensions for Emacs with built-in package manager =package=.
 
-#+begin_src emacs-lisp
-  (require 'package)
-  (require 'cl)
-#+end_src
+ #+begin_src emacs-lisp
+   (require 'package)
+   (require 'cl-lib)
+ #+end_src
 
-  Package can be fetched from different mirrors, melpa is the largest archive and is well maintained.
-  Org is an offical mirror of org-mode.
+   Package can be fetched from different mirrors, melpa is the largest archive and is well maintained.
+   Org is an offical mirror of org-mode.
   
-  If your Emacs version is smaller than 26.3, it may cause some bad request
-  issues. However Funtoo's offical portage hasn't been updated. To solve this
-  problem, I set gnutls-algorithm-priority to "NORMAL:-VERS_TLS1.3". This bug
-  has been solved in 26.3.
+   If your Emacs version is smaller than 26.3, it may cause some bad request
+   issues. However Funtoo's offical portage hasn't been updated. To solve this
+   problem, I set gnutls-algorithm-priority to "NORMAL:-VERS_TLS1.3". This bug
+   has been solved in 26.3.
 
-#+begin_src emacs-lisp
-  (when (version< emacs-version "26.3")
-    (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+ #+begin_src emacs-lisp
+   (when (version< emacs-version "26.3")
+     (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 
-  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-  (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
-  (package-initialize)
+   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
+   (add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+   (package-initialize)
 
-  (unless package-archive-contents
-    (package-refresh-contents))
-#+end_src
+   (unless package-archive-contents
+     (package-refresh-contents))
+ #+end_src
 
-  The following configuration assumes that the packages listed below are installed.
-  If we would like to add some extensions, put the names in =marvin/package-list=.
+   The following configuration assumes that the packages listed below are installed.
+   If we would like to add some extensions, put the names in =marvin/package-list=.
 
-#+begin_src emacs-lisp
-  (defvar marvin/package-list '(rainbow-delimiters
-                                doom-themes
-                                google-translate
-                                company
-                                yasnippet
-                                yasnippet-snippets
-                                helm
-                                htmlize
-                                flycheck
-                                magit
-                                web-mode
-                                yaml-mode
-                                markdown-mode
-                                markdown-mode+
-                                multi-term
-                                company-lsp
-                                lsp-mode
-                                lsp-ui
-                                helm-lsp
-                                smart-mode-line
-                                smart-mode-line-atom-one-dark-theme
-                                ))
-  (dolist (package marvin/package-list)
-    (unless (package-installed-p package)
-      (package-install package)))
+ #+begin_src emacs-lisp
+   (defvar marvin/package-list '(rainbow-delimiters
+                                 doom-themes
+                                 google-translate
+                                 company
+                                 yasnippet
+                                 yasnippet-snippets
+                                 helm
+                                 htmlize
+                                 flycheck
+                                 magit
+                                 web-mode
+                                 yaml-mode
+                                 markdown-mode
+                                 markdown-mode+
+                                 multi-term
+                                 company-lsp
+                                 lsp-mode
+                                 lsp-ui
+                                 helm-lsp
+                                 smart-mode-line
+                                 smart-mode-line-atom-one-dark-theme
+                                 geiser
+                                 slime
+                                 slime-company
+                                 slime-repl-ansi-color
+                                 nasm-mode
+                                 yafolding
+                                 org-present
+                                 tramp
+                                 ))
+   (dolist (package marvin/package-list)
+     (unless (package-installed-p package)
+       (package-install package)))
 
-  (add-to-list 'load-path "~/.emacs.d/thirdparty/")
-#+end_src
+   (add-to-list 'load-path "~/.emacs.d/thirdparty/")
+ #+end_src
 
 * General defaults
 
@@ -198,6 +207,9 @@
   I use /Menlo/ and /Noto Sans CJK TC/ as my English and Chinese default font.
   I separatly set these fonts in specific size to avoid Chinese aligning
   problems in org-table.
+
+  #+begin_src emacs-lisp :tangle no
+  #+end_src
 
   #+begin_src emacs-lisp
      (defvar emacs-english-font "Menlo")
@@ -489,6 +501,12 @@
                        (delete-region (point-min) (point-max)))))))
 #+END_SRC
 
+** Keybindings
+
+#+begin_src emacs-lisp
+  (define-key marvin-bindings-map (kbd "C-c s") 'yas-insert-snippet)
+#+end_src
+
 * Flycheck
 
   Flycheck is an on-the-fly syntax checking tool. It support a lot of languages
@@ -572,20 +590,19 @@
   (define-key marvin-bindings-map (kbd "C-c j") 'magit-status)
 #+END_SRC
 
-* Line Moving
-
-  Emacs' built-in moving line function /transpose-lines/ is strangs so I add
-  town function to enhance this feature.
-
+* Editor
+** Line Moving
+   Emacs' built-in moving line function /transpose-lines/ is strangs so I add
+   town function to enhance this feature.
 
 #+BEGIN_SRC emacs-lisp
-  (defun move-line-up ()
+  (defun marvin/move-line-up ()
     "Move up the current line."
     (interactive)
     (transpose-lines 1)
     (forward-line -2))
 
-  (defun move-line-down ()
+  (defun marvin/move-line-down ()
     "Move down the current line."
     (interactive)
     (forward-line 1)
@@ -593,11 +610,22 @@
     (forward-line -1))
 #+END_SRC
 
+** Line Deleting
+   Line Deleting Feature in vim is pretty cool.
+
+#+begin_src emacs-lisp
+  (defun marvin/delete-line ()
+    (interactive)
+    (delete-region (line-beginning-position) (line-end-position))
+    (delete-backward-char 1))
+#+end_src
+
 ** Keybindings
 
 #+BEGIN_SRC emacs-lisp
-  (define-key marvin-bindings-map (kbd "M-<up>") 'move-line-up)
-  (define-key marvin-bindings-map (kbd "M-<down>") 'move-line-down)
+  (define-key marvin-bindings-map (kbd "M-<up>") 'marvin/move-line-up)
+  (define-key marvin-bindings-map (kbd "M-<down>") 'marvin/move-line-down)
+  (define-key marvin-bindings-map (kbd "M-k") 'marvin/delete-line)
 #+END_SRC
 
 * Multi-term
@@ -632,6 +660,8 @@
         lsp-prefer-flymake nil
         )
 
+  (setq lsp-pyls-server-command "~/.local/bin/pyls")
+
   (add-to-list 'marvin/company-backends 'company-lsp)
   (add-to-list 'marvin/company-backends 'company-irony-c-headers)
   (add-hook 'c++-mode-hook #'lsp)
@@ -642,7 +672,6 @@
         company-lsp-cache-candidates nil)
 
   (require 'helm-lsp)
-
 #+END_SRC
 
 * Dired
@@ -650,7 +679,6 @@
 #+begin_src emacs-lisp
   (require 'dired)
   (require 'dired-x)
-;;  (require 'dired+)
 
   (setq dired-dwim-target t)
 
@@ -782,4 +810,34 @@
   (add-hook 'dired-mode-hook 'dired-sort-auto-apply)
   (define-key dired-mode-map "s" 'dired-sort-and-remember)
 #+end_src
+
+* Org-mode
+#+begin_src emacs-lisp 
+  (org-babel-do-load-languages 'org-babel-load-languages
+                               '((shell . t)))
+  (setq org-use-sub-superscripts nil)
+  (setq org-export-with-sub-superscripts nil)
+#+end_src
+
+* Common Lisp
+#+begin_src emacs-lisp
+  (setq inferior-lisp-program "/usr/bin/sbcl"
+        slime-contribs '(slime-fancy))
+#+end_src
+
+* Assembly
+
+#+begin_src emacs-lisp
+  (require 'nasm-mode)
+  (add-hook 'asm-mode-hook 'nasm-mode)
+#+end_src
+
+* Yafolding
+
+Use thirdparty package Yafolding for code folding.
+
+#+BEGIN_SRC elisp
+  (require 'yafolding)
+  (add-hook 'prog-mode-hook (lambda () (yafolding-mode)))
+#+END_SRC
 

@@ -4,23 +4,8 @@
  | Item  | Version     |
  |-------+-------------|
  | Emacs | >= 26.1     |
- | Rtags | >= 2.19.126 |
  | Menlo | Any         |
  |-------+-------------|
 ** How to install
  See dotfiles.org
  A few changes in appearance and key-bindings
-** Features
- | Focas on C++ programming    |
- | Google Translate Mode       |
- | Helm company-mode Yasnippet |
- | GPL snippet for c++-mode    |
- | company-mode                |
-*** C++ Mode
- | irony-c-header         |
- | rtags                  |
- | lsp-mode (clangd)      |
- | flycheck with lsp-mode |
-** TODO
- | python                    |
- | c++ interactive test mode |
